@@ -3,7 +3,7 @@ name: Deploy to AWS EC2
 on:
   push:
     branches:
-      - main
+      - main  # Trigger deployment on push to main branch
 
 jobs:
   deploy:
@@ -11,23 +11,20 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v2
 
-      - name: Setup SSH
-        uses: webfactory/ssh-agent@v0.7.0
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.5.3
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: Deploy to EC2
+      - name: Deploy to ECS
         run: |
-          ssh -o StrictHostKeyChecking=no \
-              ec2-user@3.87.64.53 << 'EOF'
-          set -e
-          cd /var/www/html 
-          sudo git fetch origin
-          sudo git reset --hard origin/main
-          sudo chown -R ec2-user:nginx /var/www/html/ 
-          sudo chmod -R 775 /var/www/html/ 
-          sudo systemctl reload nginx
-          echo "Deployment successful!"
+          ssh -o StrictHostKeyChecking=no ec2-user@3.87.64.53 << 'EOF' 
+            cd /var/www/html/CloudComp-Midterm
+            sudo git pull origin main
+            # Restart Nginx or any other service if needed
+            sudo systemctl restart nginx
           EOF
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
